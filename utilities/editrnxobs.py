@@ -44,7 +44,7 @@ sys.path.append("/usr/local/lib/python3.10/site-packages") # Ubuntu 22.04
 import ottplib as ottp
 import rinexlib as rinex
 
-VERSION = "2.2.1"
+VERSION = "2.2.2"
 AUTHORS = "Michael Wouters"
 
 # ------------------------------------------
@@ -109,7 +109,7 @@ def UpdateHeader(hdr,nsv):
 		if args.excludegnss:
 			if 'SYS / # / OBS TYPES' in hdr[i]:
 				if hdr[i][0] in args.excludegnss: # may have continuation lines
-					nsats = hdr[i][3:6].strip()
+					nsats = hdr[i][3:6].strip() # don't cast to an integer: this may be whitespace
 					if nsats:
 						ncontinuation = int(math.ceil(int(nsats)/13)) - 1
 					else:
@@ -118,7 +118,7 @@ def UpdateHeader(hdr,nsv):
 					continue
 			if  'SYS / PHASE SHIFT' in hdr[i]:
 				if hdr[i][0] in args.excludegnss: # may have continuation lines
-					nsats = hdr[i][15:17].strip()
+					nsats = hdr[i][16:18].strip() # don't cast to an integer: this may be whitespace
 					if nsats:
 						ncontinuation = int(math.ceil(int(nsats)/10)) - 1
 					else:
