@@ -40,11 +40,12 @@ import time
 sys.path.append("/usr/local/lib/python3.6/site-packages")  # Ubuntu 18.04
 sys.path.append("/usr/local/lib/python3.8/site-packages")  # Ubuntu 20.04
 sys.path.append("/usr/local/lib/python3.10/site-packages") # Ubuntu 22.04
+sys.path.append("/usr/local/lib/python3.12/site-packages") # Ubuntu 24.04
 
 import ottplib as ottp
 import rinexlib as rinex
 
-VERSION = "2.2.2"
+VERSION = "2.2.3"
 AUTHORS = "Michael Wouters"
 
 # ------------------------------------------
@@ -55,7 +56,7 @@ def IsMJD(txt):
 def ParseRINEXFileName(fname):
 	ver = 0
 	p = os.path.dirname(fname)
-	match = re.search('(\w{4})(\d{3})0\.(\d{2})([oOdD]|[oOdD].\w{2,3})$',fname) # version 2 [dD] for Hatanaka compression
+	match = re.search(r'(\w{4})(\d{3})0\.(\d{2})([oOdD]|[oOdD].\w{2,3})$',fname) # version 2 [dD] for Hatanaka compression
 	if match:
 		st = match.group(1)
 		doy = int(match.group(2))
@@ -69,7 +70,7 @@ def ParseRINEXFileName(fname):
 		ver=2
 		return (p,ver,st,doy,yy,yyyy,ext,'','','','','')
 	
-	match = re.search('(\w{9})_(\w)_(\d{4})(\d{3})(\d{4})_(\w{3})_(\w{3})_(\w{2})\.(\w{3}|\w{3}.\w{2,3})$',fname) # version 3
+	match = re.search(r'(\w{9})_(\w)_(\d{4})(\d{3})(\d{4})_(\w{3})_(\w{3})_(\w{2})\.(\w{3}|\w{3}.\w{2,3})$',fname) # version 3
 	if match:
 		st = match.group(1)
 		dataSource = match.group(2)
@@ -180,7 +181,7 @@ def GetRinexVersion(hdr):
 	vMinor = None
 	hdrField = GetHeaderField(hdr,'RINEX VERSION / TYPE')
 	if hdrField:
-		match = re.search('(\d+)\.(\d+)',hdrField[0][0:9])
+		match = re.search(r'(\d+)\.(\d+)',hdrField[0][0:9])
 		if match:
 			vMajor = int(match.group(1))
 			vMinor = int(match.group(2))
