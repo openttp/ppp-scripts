@@ -32,6 +32,7 @@
 import argparse
 import glob
 import os
+from   pathlib import Path
 import re
 import shutil
 import subprocess
@@ -52,7 +53,7 @@ try:
 except ImportError:
 	sys.exit('ERROR: Must install rinexlib\n eg openttp/software/system/installsys.py -i rinexlib')
 	
-VERSION = '0.3.0'
+VERSION = '0.4.0'
 AUTHORS = 'Michael Wouters'
 EDIT_RNX_OBS = 'editrnxobs.py'
 CSRS_PPP_AUTO = 'csrs_ppp_auto.py'
@@ -255,6 +256,7 @@ for rx in receivers:
 				tmprnx.append(os.path.join(tmpDir,basename))
 				
 		ottp.Debug('Running ' + editRnxObs)
+		
 		try:
 			cmdargs = [editRnxObs,'--catenate','--template',template,'--tmpdir',tmpDir,'--excludegnss',exclusions,'--obsdir',tmpDir,'--output',output,str(jStartMJD),str(jStopMJD)]
 			x = subprocess.check_output(cmdargs) 
@@ -275,13 +277,22 @@ for rx in receivers:
 		
 		# Submit job
 		ottp.Debug('Running ' + csrsPPPauto)
-		try:
-			cmdargs = [csrsPPPauto,'--user_name',CSRSuser,'--ref','ITRF','--get_max','90','--rnx',gzoutput,'--results_dir',tmpDir]
-			x = subprocess.check_output(cmdargs) 
-		except Exception as e:
-			print(e)
-			ottp.ErrorExit('Failed to run ' + csrsPPPauto)
-		
+		# This does not work reliably on our network
+		# Try a few times before bombing out
+		nTries = 1
+		while (1):
+			try:
+				ottp.Debug(f'Attempt #{nTries}')
+				cmdargs = [csrsPPPauto,'--user_name',CSRSuser,'--ref','ITRF','--get_max','90','--rnx',gzoutput,'--results_dir',tmpDir]
+				x = subprocess.check_output(cmdargs)
+				break
+			except Exception as e:
+				nTries += 1
+				if nTries > 3:
+					print(e)
+					ottp.ErrorExit('Failed to run ' + csrsPPPauto)
+				time.sleep(1)
+				
 		tstop  = time.time()
 		ottp.Debug('Job run time = {:g} s'.format(tstop-tstart))
 		
@@ -314,7 +325,8 @@ for rx in receivers:
 		shutil.copyfile(clkfile,os.path.join(clockDir,'PPP{:02d}{:03d}{}.CLK'.format(yy % 100,doy,station)))
 		
 		# Keep the archive for a while, to help investigation of problems
-		shutil.move(csrsout,csrsDir)
+		pathObj  = Path(csrsout) 
+		shutil.move(csrsout,os.path.join(csrsDir,pathObj.name)) # force overwrite
 		# Clean up temporary files
 		files = glob.glob(os.path.join(tmpDir,'{}{:d}*'.format(station,jStartMJD)))
 		for f in files:
