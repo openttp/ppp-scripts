@@ -47,7 +47,7 @@ try:
 except ImportError:
 	sys.exit('ERROR: Must install ottplib\n eg openttp/software/system/installsys.py -i ottplib')
 
-VERSION = "1.0.1"
+VERSION = "1.1.0"
 AUTHORS = "Michael Wouters"
 
 # RINEX V3 constellation identifiers
@@ -189,19 +189,13 @@ parser.add_argument('--listcentres','-l',help='list the configured IGS data cent
 parser.add_argument('--ephemeris',help='get broadcast ephemeris. If statid unspecified then the combined IGS file is fetched. If V2, only the GPS ephemeris is fetched',action='store_true')
 parser.add_argument('--observations',help='get station observations',action='store_true')
 parser.add_argument('--statid',help='station identifier (eg V3 SYDN00AUS, V2 sydn)')
-parser.add_argument('--rinexversion',help='RINEX version of station observation')
+parser.add_argument('--rinexversion',help='RINEX version of station observation/navigation files')
 parser.add_argument('--system',help='gnss system (GLONASS,BEIDOU,GPS,GALILEO,MIXED')
 
 # IGS products
 parser.add_argument('--clocks',help='get clock products (.clk)',action='store_true')
-#parser.add_argument('--clktemplate',help='set template for the clock file')
-
 parser.add_argument('--orbits',help='get orbit products (.sp3)',action='store_true')
-#parser.add_argument('--sp3template',help='set template for the sp3 files')
-
 parser.add_argument('--erp',help='get ERP products (.erp)',action='store_true')
-#parser.add_argument('--erptemplate',help='set template for the erp files')
-
 parser.add_argument('--bias',help='get differential code bias products',action='store_true')
 parser.add_argument('--biasformat',help=f'set bias format (OSBBIA/DCBBIA/DCB - default = {biasFormat})',default = biasFormat)
 parser.add_argument('--biascentre',help=f'set centre for bias products (default = {biasCentre})',default = biasCentre)
@@ -360,11 +354,6 @@ if args.ppp: # configure download of all required products
 	args.orbits = True
 	args.erp    = True
 
-#if args.rapid:
-#	clkTemplate = 'IGS0OPSRAP_YYYYDDD0000_01D_05M_CLK.CLK.gz'
-#elif args.final:
-#	clkTemplate = 'IGS0OPSFIN_YYYYDDD0000_01D_05M_CLK.CLK.gz'
-	
 # Now that we've defined the file types to download, set the MJD range for download
 nprev = int(args.ndays)
 
@@ -435,7 +424,7 @@ for m in range(start,stop+1):
 		elif (args.final):
 			dstdir = finaldir
 			if GPSWn > 2237:
-				fname = 'IGS0OPSFIN_{:04d}{:03d}0000_01D_05M_CLK.CLK.gz'.format(yyyy,doy) 
+				fname = 'IGS0OPSFIN_{:04d}{:03d}0000_01D_30S_CLK.CLK.gz'.format(yyyy,doy) 
 			else:
 				fname = 'igs{:04d}{:1d}.clk.Z'.format(GPSWn,GPSday)
 				magicTag = 'compress\'d'
@@ -536,6 +525,18 @@ for m in range(start,stop+1):
 				url = '{}/{}/{:04d}/brdc/{}'.format(baseURL,stationDataPath,yyyy,fname)
 			FetchFile(session,url,'{}/{}'.format(outputdir,fname),magicTag)
 	
+		elif (rnxVersion == 4): # really only useful for picking up a combined V4 file
+			# This option doesn't really make sense because it doesn't uniquely define a name
+			if args.statid:
+				fname = '{}_R_{:04d}{:03d}0000_01D_{}N.rnx.gz'.format(stationID,yyyy,doy,gnss)
+				yy = yyyy-100*int(yyyy/100)
+				url = '{}/{}/{:04d}/{:03d}/{:02d}{}/{}'.format(baseURL,stationDataPath,yyyy,doy,yy,
+					GNSStoNavDirectory(gnss),fname)
+			else: # we want the IGS combined ephemeris
+				fname = 'BRD400DLR_S_{:04d}{:03d}0000_01D_MN.rnx.gz'.format(yyyy,doy)
+				url = '{}/{}/{:04d}/brdc/{}'.format(baseURL,stationDataPath,yyyy,fname)
+			FetchFile(session,url,'{}/{}'.format(outputdir,fname),magicTag)
+			
 	# Miscellanea - station observations
 	if (args.observations):
 		magicTag = 'gzip compressed'
