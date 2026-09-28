@@ -53,7 +53,7 @@ try:
 except ImportError:
 	sys.exit('ERROR: Must install rinexlib\n eg openttp/software/system/installsys.py -i rinexlib')
 	
-VERSION = '0.4.0'
+VERSION = '0.4.1'
 AUTHORS = 'Michael Wouters'
 EDIT_RNX_OBS = 'editrnxobs.py'
 CSRS_PPP_AUTO = 'csrs_ppp_auto.py'
@@ -121,10 +121,10 @@ if 'paths:root' in cfg:
 
 if 'paths:tmp' in cfg:
 	tmpDir = ottp.MakeAbsolutePath(cfg['paths:tmp'],root)
+
 if not(os.path.exists(tmpDir)):
 	ottp.ErrorExit(tmpDir + " doesn't exist - check the configuration file")
 	
-
 if 'main:weekly start' in cfg:
 	weeklyStart = int(cfg['main:weekly start'])
 
@@ -189,6 +189,9 @@ if not('QZSS' in gnss):
 ottp.Debug('Excluded GNSS = '+exclusions)
 
 CSRSuser = cfg['main:csrs user']
+
+if 'main:csrs ppp auto' in cfg:
+	csrsPPPauto = ottp.MakeAbsoluteFilePath(cfg['main:csrs ppp auto'],root,os.path.join(root,f'bin'))
 
 for rx in receivers:
 	
@@ -277,6 +280,7 @@ for rx in receivers:
 		
 		# Submit job
 		ottp.Debug('Running ' + csrsPPPauto)
+
 		# This does not work reliably on our network
 		# Try a few times before bombing out
 		nTries = 1
